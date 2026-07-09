@@ -1,9 +1,9 @@
 {
-  "name": "Phoenixion Price Alert",
+  "name": "Phoenixion Alert",
   "short_name": "PX Alert",
   "description": "Forex price alert tool for ICT/SMC traders",
-  "start_url": "/forex-price-alert/",
-  "scope": "/forex-price-alert/",
+  "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "orientation": "portrait",
   "background_color": "#0a0d12",
