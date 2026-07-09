@@ -992,8 +992,47 @@ function showToast(msg) {
 </script>
 <script>
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('sw.js').catch(()=>{});
+  let refreshing = false;
+
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (refreshing) return;
+    refreshing = true;
+    window.location.reload();
+  });
+
+  navigator.serviceWorker.register('./sw.js', { scope: './' })
+    .then(reg => {
+      console.log('[App] SW registered, scope:', reg.scope);
+
+      // Poll for updates every 30s
+      setInterval(() => reg.update(), 30000);
+
+      if (reg.waiting) {
+        // A new SW is already waiting — tell it to activate
+        reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+      }
+
+      reg.addEventListener('updatefound', () => {
+        const newWorker = reg.installing;
+        newWorker.addEventListener('statechange', () => {
+          if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+            // New version available → force activation → page reloads via controllerchange
+            console.log('[App] New version detected, reloading...');
+            newWorker.postMessage({ type: 'SKIP_WAITING' });
+          }
+        });
+      });
+    })
+    .catch(err => console.error('[App] SW error:', err));
 }
+
+// Debug banner
+setTimeout(() => {
+  const isPWA = window.matchMedia('(display-mode: standalone)').matches;
+  console.log('[App] Mode:', isPWA ? 'STANDALONE PWA ✓' : 'BROWSER ✗');
+  console.log('[App] URL:', location.href);
+  console.log('[App] SW controller:', navigator.serviceWorker.controller ? 'active' : 'NONE');
+}, 500);
 </script>
 </body>
 </html>
